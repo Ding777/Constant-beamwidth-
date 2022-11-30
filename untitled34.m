@@ -5,7 +5,7 @@ warning off;
 clear all; close all; clc;
 %% 基本参数
 f01 = 4000;           % 信号中心频率Signal center frequency
-
+B =  8000; 
 Nfft =512;                                % fft点数
 F0=linspace(0, 8000, Nfft/2+1);           % The actual frequency corresponding to each fft frequency point
 f_range=linspace(f01-B/2, f01+B/2, Nfft/2+1);     % The actual frequency corresponding to each fft frequency point
