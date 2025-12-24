@@ -1,14 +1,13 @@
-clear
 clc
 close all;
 warning off;
 clear all; close all; clc;
-%% 基本参数
-f01 = 4000;           % 信号中心频率Signal center frequency
+%% Basic parameters
+f01 = 4000;           % Signal center frequency
 B =  8000; 
-Nfft =512;                                % fft点数
-F0=linspace(0, 8000, Nfft/2+1);           % The actual frequency corresponding to each fft frequency point
-f_range=linspace(f01-B/2, f01+B/2, Nfft/2+1);     % The actual frequency corresponding to each fft frequency point
+Nfft =512;                                % FFT points
+F0=linspace(0, 8000, Nfft/2+1);           % Actual frequency corresponding to each FFT bin
+f_range=linspace(f01-B/2, f01+B/2, Nfft/2+1);     % Frequency range around center frequency
 % F(1:10)=F(11);
 % F(1:3)=F(4);
 
@@ -21,32 +20,32 @@ f_range=linspace(f01-B/2, f01+B/2, Nfft/2+1);     % The actual frequency corresp
 % F = fl:B/(Nfft/2):fh; 
 
 M =16;                                % Number of array elements
-c = 340;                              % speed of sound
-lambda = c/f01;                        %center wavelength
-R =0.025;                               % actual radius
-% R =0.5*M*lambda/(2*pi);             % 理想半径
+c = 340;                              % Speed of sound (m/s)
+lambda = c/f01;                        % Center wavelength
+R =0.025;                               % Actual radius of the circular array
+% R =0.5*M*lambda/(2*pi);             % Ideal radius (example)
 
 gamma=2*pi*[0:M-1]'/M ;
-% d = 0.5*lambda;                        % 阵元间距(半波长为理想宽度，可视距离内无额外峰值)
-% BW= 0.886*lambda/(M*d)*180/pi;         % 中心频率处半功率波束宽度（分辨率）
-% fprintf('半功率波束宽度BW = %0.2f°\n',BW)
+% d = 0.5*lambda;                        % Element spacing (half-wavelength ideal)
+% BW= 0.886*lambda/(M*d)*180/pi;         % Half-power beamwidth at center frequency (degrees)
+% fprintf('Half-power beamwidth BW = %0.2f°\n',BW)
 
-% seta1=[60]*pi/180;                     % 零点约束俯仰角1
-% fai1=[-140]*pi/180;                    % 零点约束方位角1  
+% seta1=[60]*pi/180;                     % Zero-constraint elevation angle 1
+% fai1=[-140]*pi/180;                    % Zero-constraint azimuth 1  
  
-% seta2=[60]*pi/180;                     % 零点约束俯仰角2
-% fai2=[-111]*pi/180;                    % 零点约束方位角2 
+% seta2=[60]*pi/180;                     % Zero-constraint elevation angle 2
+% fai2=[-111]*pi/180;                    % Zero-constraint azimuth 2 
 
-%% 读入实际音频数据
-seta0 = 60*pi/180;                       % Signal Arrival Elevation Angle
-fai0  =-150*pi/180;                       % Signal Arrival Azimuth
+%% Read actual audio / parameters for DOA
+seta0 = 60*pi/180;                       % Signal arrival elevation angle (radians)
+fai0  =-150*pi/180;                      % Signal arrival azimuth angle (radians)
 f=[1]';    
-%% diffuse noise field MSC
-Fs=16000;                                                               
+%% Diffuse noise field spatial coherence (MSC)
+Fs=16000;                                                              
 f0 = (1:Nfft/2+1)*Fs/Nfft;
 Fvv = zeros(Nfft/2+1,M,M);
  %f0=500;
-% d=2*R*sin(pi/M);
+% dij = 2*R*sin(pi/M);
 
 for i = 1:M
     for j = 1:M   
@@ -59,7 +58,7 @@ for i = 1:M
     end
 end
 
-% 对角加载映射曲线
+% Diagonal loading mapping curve (for stability)
 u=1:1:Nfft/2+1;
 k=-0.3;
 B=80;
@@ -75,27 +74,27 @@ end
 %     imshow(squeeze(Fvv(i,:,:)))
 %     pause(0.05)
 %  end
-%M = 10;                 %阵元数
-%dd= (0:1:M-1) * (c/f0/2);   %阵元位置
+%M = 10;                 % Number of elements
+%dd= (0:1:M-1) * (c/f0/2);   % Element positions
 p_all=[];
 a0_all=[];
 for nf =2:Nfft/2+1
     freq = f_range(nf);
     freq1=500;
-   % a0 = exp(-1i * 2 * pi * freq /c *dd.'*sind(theta0));   %计算期望导向矢量
-    a0=exp(-1j*2*pi*R*freq/c*sin(seta0)*cos(fai0-gamma));   %Calculate desired steering vector
+   % a0 = exp(-1i * 2 * pi * freq /c *dd.'*sind(theta0));   % Compute desired steering vector
+    a0=exp(-1j*2*pi*R*freq/c*sin(seta0)*cos(fai0-gamma));   % Calculate desired steering vector (UCA)
     a0=a0;
     C=[a0];
    % a0=a0/100;
     Rxx=squeeze(Fvv2(nf,:,:));
 %   Rxx=1;
-    Wc=(Rxx*C)/(C'*Rxx*C)*f;                % MVDR algorithm to obtain weight coefficient
-%       零点调向(支持多个零点)
+    Wc=(Rxx*C)/(C'*Rxx*C)*f;                % MVDR algorithm to obtain weight coefficients
+%       Null steering (supports multiple nulls)
     Wopt=Wc;  
     step = 1;
     seta=seta0; 
-    scan_angle = [-180:step:180];                        %Scan Angle Range
-    scan_angle=[-180:step:180]/180*pi; 
+    scan_angle = [-180:step:180];                        % Scan angle range (degrees)
+    scan_angle=[-180:step:180]/180*pi;                   % convert to radians
     a_all =[];                           
     a_all1 =[];  
     a_all2=[];
@@ -111,7 +110,7 @@ for nf =2:Nfft/2+1
         a_all2=[a_all2  (20*log10(abs(as.*conj(Wopt))/max(abs(as.*conj(Wopt)))))];
     end
     %p11(i_1,nf)=abs(a_all);
-    p = 20*log10(abs(a_all'*conj(Wopt))/max(abs(a_all'*conj(Wopt))));  %Computational pattern
+    p = 20*log10(abs(a_all'*conj(Wopt))/max(abs(a_all'*conj(Wopt))));  % Compute beam pattern (dB)
     p3 = 20*log10(abs(a_all')/max(abs(a_all')));  
     p4 = 20*log10(abs(p1)/max(abs(p1))); 
     %p = 20*log10(abs(a_all'*conj(a0))/max(abs(a_all'*conj(a0))));  
@@ -129,19 +128,19 @@ for nf =2:Nfft/2+1
         p_ref = p;
         index_ml = find(scan_angle>=angle_ml(1) & scan_angle<=angle_ml(end));
 
-        a_ml = a_all(:,index_ml);%main lobe steering vector
-        p_ml = p(index_ml);      %main lobe expected response
+        a_ml = a_all(:,index_ml); % Main-lobe steering vectors
+        p_ml = p(index_ml);       % Expected main-lobe response
 
 
         index_s1 = find(scan_angle>=angle_sl1(1) & scan_angle<=angle_sl1(end));     
-        a_sl1  = a_all(:,index_s1);    %side lobe steering vector
+        a_sl1  = a_all(:,index_s1);    % Side-lobe steering vectors
 
         index_s2 = find(scan_angle>=angle_sl2(1) & scan_angle<=angle_sl2(end));    
-        a_sl2  = a_all(:,index_s2);     %side lobe steering vector
+        a_sl2  = a_all(:,index_s2);    % Side-lobe steering vectors
 
         index_sl = [index_s1 index_s2];
-        a_sl = [a_sl1 a_sl2];            %total sidelobe steering vector
-        p_sl = p(index_sl);              %side lobe response
+        a_sl = [a_sl1 a_sl2];          % Total sidelobe steering vectors
+        p_sl = p(index_sl);            % Side-lobe responses
     end
     
 
@@ -153,7 +152,7 @@ for nf =2:Nfft/2+1
     ylim([-50 0])
     xlabel('\phiAzimuth(^o)')
     ylabel('beam output/dB')
-    title([num2str(P_Hz) ' Hzbeam pattern'])
+    title([num2str(P_Hz) ' Hz beam pattern'])
     %p_all = [p_all p];
      figure(1)
     plot( scan_angle*180/pi, p,'-.','linewidth', 3)
@@ -192,15 +191,15 @@ w_msl_all=[];
 for nf =2:Nfft/2+1
          freq = f_range(nf);
          %freq1=500;
-    a0=exp(-1j*2*pi*R*freq/c*sin(seta0)*cos(fai0-gamma));   %计算期望导向矢量 %Calculate desired steering vector
+    a0=exp(-1j*2*pi*R*freq/c*sin(seta0)*cos(fai0-gamma));   % Calculate desired steering vector
     C=[a0];
     Rxx=squeeze(Fvv2(nf,:,:));
 %   Rxx=1;
-    Wc=(Rxx*C)/(C'*Rxx*C)*f;                % MVDR算法获得权系数
-%       Zero point adjustment (support multiple zero points)
+    Wc=(Rxx*C)/(C'*Rxx*C)*f;                % MVDR algorithm to obtain weight coefficients
+%       Zero point adjustment (support multiple nulls)
     Wopt=Wc; 
     step = 1;
-   % scan_angle = [-90:step:90];                            %扫描角度范围 %Scan Angle Range    
+   % scan_angle = [-90:step:90];                            % Scan angle range    
     scan_angle=[-180:1:180]/180*pi; 
     a_all =[];                           
     for i_1 = 1:length(scan_angle) 
@@ -208,22 +207,22 @@ for nf =2:Nfft/2+1
         p2(i_1,nf)=abs(as*conj(Wopt));
         a_all= [a_all as'];
     end
-p = 20*log10(abs(a_all'*conj(Wopt))/max(abs(a_all'*conj(Wopt))));        %计算方向图 %Computational pattern
+p = 20*log10(abs(a_all'*conj(Wopt))/max(abs(a_all'*conj(Wopt))));        % Compute beam pattern (dB)
 p2=Wopt';
 %p = 20*log10(abs(a_all'*conj(a0))/max(abs(a_all'*conj(a0))));  
-    %Side lobe control main lobe minimum error
-    max_sl = -10; %%%
+    % Sidelobe control with main-lobe least-squares
+    max_sl = -10; % dB threshold for sidelobe
     max_sl=10.^(max_sl/20);
-    p_ml = 10.^(p_ml/20);                           %%%期望主瓣响应 %expected main lobe response
+    p_ml = 10.^(p_ml/20);                           % Expected main-lobe response (linear)
     cvx_begin quiet
         variable w_msl(M) complex
-        p_temp=(w_msl' * a_all);             %所有的乘积      % all the products       
-        p_temp_ml=p_temp(index_ml);   %选出对应的主瓣 %select the coressponding main lobe
+        p_temp=(w_msl' * a_all);             % All products       
+        p_temp_ml=p_temp(index_ml);   % Select corresponding main-lobe entries
         p_temp_ml=p_temp_ml(:); 
-        p_ml=p_ml(:);                              %期望主瓣响应 %expected main lobe response
-        p_temp_sl=p_temp(index_sl);       %选出对应的旁瓣 %Select the corresponding side lobe
+        p_ml=p_ml(:);                       % Expected main-lobe response (vector)
+        p_temp_sl=p_temp(index_sl);         % Select corresponding sidelobe entries
 
-        minimize(norm(p_temp_ml-p_ml,2))  %最小化2范数  %Minimize the 2-norm
+        minimize(norm(p_temp_ml-p_ml,2))  % Minimize 2-norm (least squares)
     subject to
         abs(p_temp_sl) <= max_sl;
         w_msl'*conj(a0) == 1;
@@ -234,12 +233,12 @@ p2=Wopt';
     C1=[w_msl];
     Rxx1=squeeze(Fvv2(nf,:,:));
 %   Rxx=1;
-    Wc1=(Rxx1*C1)/(C1'*Rxx1*C1)*f;                % MVDR algorithm to obtain weight coefficient
-%       Zero point adjustment (support multiple zero points)
+    Wc1=(Rxx1*C1)/(C1'*Rxx1*C1)*f;                % MVDR algorithm to obtain weight coefficients
+%       Zero point adjustment (support multiple nulls)
     Wopt1=Wc1; 
     p_opt1 = 20*log10(abs((Wopt1)' * a_all)/max(abs((Wopt1)' * a_all)));
 
-    %% 绘图 %drawing
+    %% Plotting
     %figure(3)
     P_Hz=4000;
     P_B=round(P_Hz/6000*Nfft/2);
@@ -248,7 +247,7 @@ p2=Wopt';
     ylim([-50 0])
     xlabel('\phiAzimuth(^o)')
     ylabel('beam output/dB')
-    title([num2str(P_Hz) ' Hzbeam pattern'])
+    title([num2str(P_Hz) ' Hz beam pattern'])
     p_all_opt = [p_all_opt p_opt.']; 
     w_msl_all=[w_msl_all p111'];
     Wopt_all=[Wopt_all p2'];
