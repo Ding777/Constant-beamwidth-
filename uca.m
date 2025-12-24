@@ -117,7 +117,6 @@ for nf =2:Nfft/2+1
     %p = 20*log10(abs(a_all'*conj(a0))/max(abs(a_all'*conj(a0))));  
     p7 = 20*log10(abs(a_all'*(Wopt))/max(abs(a_all'*(Wopt))));
     p11=conj(a0)';
-        f01=5.312500000000000e+03;
         f01=1000;
         if freq == f01
         angle_ml = [-70:1:70]/180*pi;
