@@ -1,5 +1,5 @@
 %% FUNCTION: superdirective_CM20
-function [H_opt, Fvv] = superdirective_CM20_1(azimuth_angle, elevation_angle, Nfft, fs, M, mic_radius, c, reg_alpha)
+function [H_opt, Fvv] = superdirective(azimuth_angle, elevation_angle, Nfft, fs, M, mic_radius, c, reg_alpha)
 % SUPERDIRECTIVE_CM20 computes superdirective weights H_opt and diffuse matrix Fvv.
 % Signature required: [H_opt, Fvv] = superdirective_CM20(azimuth_angle, elevation_angle, Nfft)
 % Optional args: fs (default 16000), M (default 19), mic_radius (default 0.042), c (default 340),
