@@ -18,7 +18,7 @@ audioFolder = 'F:\test0_enhanced_out_folder_data_train_alldata_one2_targetone1_a
 [xr, fs] = audioread(audioFolder);
 % ---------------- compute superdirective weights ------------------
 % returns Wopt_all: M x K (K = Nfft/2+1) and Fvv: K x M x M
-[Wopt_all, Fvv] = superdirective_CM20_1(angle_az, angle_el, Nfft, fs, M, mic_radius, c, reg_alpha);
+[Wopt_all, Fvv] = superdirective(angle_az, angle_el, Nfft, fs, M, mic_radius, c, reg_alpha);
 
 % provide a DS-equivalent copy if needed
 Wopt_ds = Wopt_all;
